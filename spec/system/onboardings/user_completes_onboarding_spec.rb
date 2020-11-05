@@ -2,10 +2,10 @@ require "rails_helper"
 
 RSpec.describe "Completing Onboarding", type: :system, js: true do
   let(:password) { Faker::Internet.password(min_length: 8) }
-  let(:user) { create(:user, password: password, password_confirmation: password, saw_onboarding: false) }
 
-  after do
-    sign_out user
+  before do
+    allow(SiteConfig).to receive(:allow_email_password_registration).and_return(true)
+    allow(SiteConfig).to receive(:allow_email_password_login).and_return(true)
   end
 
   context "when the user hasn't seen onboarding" do
@@ -19,14 +19,14 @@ RSpec.describe "Completing Onboarding", type: :system, js: true do
   end
 
   context "when the user has seen onboarding" do
-    before do
-      user.update(saw_onboarding: true)
+    let(:user) { create(:user, password: password, password_confirmation: password) }
 
+    before do
       visit sign_up_path
       log_in_user(user)
     end
 
-    xit "logs in and renders the feed" do
+    it "logs in and renders the feed" do
       expect(page).to have_current_path("/?signin=true")
       expect(page.html).not_to include("onboarding-container")
     end
