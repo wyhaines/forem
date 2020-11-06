@@ -7,6 +7,7 @@ class AsyncInfoController < ApplicationController
     unless user_signed_in?
       render json: {
         broadcast: broadcast_data,
+        creator_onboarding_completed: SiteConfig.creator_onboarding_completed,
         param: request_forgery_protection_token,
         token: form_authenticity_token
       }
@@ -17,6 +18,7 @@ class AsyncInfoController < ApplicationController
       format.json do
         render json: {
           broadcast: broadcast_data,
+          creator_onboarding_completed: SiteConfig.creator_onboarding_completed,
           param: request_forgery_protection_token,
           token: form_authenticity_token,
           user: user_data
@@ -56,7 +58,7 @@ class AsyncInfoController < ApplicationController
         followed_podcast_ids: @user.cached_following_podcasts_ids,
         reading_list_ids: @user.cached_reading_list_article_ids,
         blocked_user_ids: @user.all_blocking.pluck(:blocked_id),
-        saw_onboarding: @user.saw_onboarding,
+        saw_onboarding: @user.saw_onboarding, # FIXME: address this?
         checked_code_of_conduct: @user.checked_code_of_conduct,
         checked_terms_and_conditions: @user.checked_terms_and_conditions,
         display_sponsors: @user.display_sponsors,

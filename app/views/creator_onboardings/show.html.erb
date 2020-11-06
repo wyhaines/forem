@@ -1,0 +1,59 @@
+<div id="sign-in-password-form" class="mt-8 mb-6 crayons-card p-7 align-left mx-auto" style="max-width:580px;">
+  <% if flash[:notice] %>
+    <div class="crayons-notice crayons-notice--danger mb-6">
+      <%= flash[:notice] %>
+    </div>
+  <% end %>
+
+  <%= form_for(SiteConfig.new, url: admin_config_path) do |f| %>
+    <% if defined?(resource) && resource&.errors&.any? %>
+      <div class="crayons-card crayons-card--secondary crayons-notice crayons-notice--danger">
+        <div class="crayons-card__header">
+          <h3 class="crayons-card__headline">
+            Whoops, we found <%= pluralize(resource.errors.size, "problem") %>
+          </h3>
+        </div>
+        <div class="crayons-card__body">
+          <ul>
+            <% resource.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    <% else forem_creator_flow_enabled? %>
+      <div class="align-center">
+        <p class="pb-4 fw-bold">Last step!</p>
+        <p class="registration__description">Let's set up your community.</p>
+      </div>
+    <% end %>
+    <% VerifySetupCompleted::MANDATORY_CONFIGS.each do |config_key| %>
+      <div class="crayons-field mt-2">
+                <%= onboarding_config_label config_key %>
+                <%= admin_config_description Constants::SiteConfig::DETAILS[config_key][:description] %>
+                <%= f.text_field config_key,
+                                 class: "crayons-textfield",
+                                 value: SiteConfig.public_send(config_key),
+                                 placeholder: Constants::SiteConfig::DETAILS[config_key][:placeholder] %>
+              </div>
+    <% end %>
+
+    <div class="crayons-field crayons-field--checkbox">
+      <%= f.check_box :public, checked: SiteConfig.public, class: "crayons-checkbox" %>
+      <div class="mt-0">
+        <%= admin_config_label :public %>
+        <p class="crayons-field__description">
+          Are most of the site pages (e.g. posts, profiles) public? <strong>Be very cautious about changing thing.</strong>
+        </p>
+      </div>
+    </div>
+
+
+
+
+
+    <div class="flex flex-col pt-3">
+      <%= f.submit "Finish", class: "crayons-btn" %>
+    </div>
+  <% end %>
+</div>

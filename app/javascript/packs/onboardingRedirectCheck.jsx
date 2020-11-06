@@ -32,6 +32,11 @@ document.ready.then(
       window.csrfToken = csrfToken;
       getUnopenedChannels();
 
+      // FIXME: clean this up
+      if (document.body.dataset.creatorOnboardingCompleted === 'false') {
+        return;
+      }
+
       if (redirectableLocation() && !onboardingSkippable(currentUser)) {
         window.location = `${window.location.origin}/onboarding?referrer=${window.location}`;
       }

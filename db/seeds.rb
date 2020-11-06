@@ -49,7 +49,9 @@ SiteConfig.waiting_on_first_user = false
 
 # Put forem into "starter mode"
 
-if ENV["MODE"] == "STARTER"
+# FIX ME: REVERT THIS
+# if ENV["MODE"] == "STARTER"
+if true
   SiteConfig.public = false
   SiteConfig.waiting_on_first_user = true
   puts "Seeding forem in starter mode to replicate new creator experience"

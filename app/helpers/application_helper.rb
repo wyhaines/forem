@@ -293,6 +293,12 @@ module ApplicationHelper
   end
   # rubocop:enable Rails/OutputSafety
 
+  def onboarding_config_label(method, content = nil)
+    content ||= raw("<span>#{method.to_s.humanize}</span>")
+
+    tag.label(content, class: "crayons-field__label", for: "site_config_#{method}")
+  end
+
   def admin_config_description(content)
     tag.p(content, class: "crayons-field__description") unless content.empty?
   end

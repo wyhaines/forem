@@ -11,6 +11,17 @@ module VerifySetupCompleted
     suggested_users
   ].freeze
 
+  # FIXME: Decide if i want to use this?
+  # ONBOARDING_CONFIGS = %i[
+  #   community_name
+  #   community_description
+
+  #   mascot_user_id
+
+  #   suggested_tags
+  #   suggested_users
+  # ].freeze
+
   included do
     # rubocop:disable Rails/LexicallyScopedActionFilter
     before_action :verify_setup_completed, only: %i[index new edit show]
@@ -37,6 +48,7 @@ module VerifySetupCompleted
 
     link = helpers.link_to("the configuration page", admin_config_path, "data-no-instant" => true)
     # rubocop:disable Rails/OutputSafety
+    # FIXME: Maybe remove this?
     flash[:global_notice] = "Setup not completed yet, missing #{missing_configs_text}. Please visit #{link}.".html_safe
     # rubocop:enable Rails/OutputSafety
   end

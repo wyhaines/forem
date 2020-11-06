@@ -301,6 +301,7 @@ Rails.application.routes.draw do
       get :podcasts
     end
 
+    resource :creator_onboarding, only: :show
     resource :onboarding, only: :show
     resources :profiles, only: %i[update]
     resources :profile_field_groups, only: %i[index], defaults: { format: :json }

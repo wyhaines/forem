@@ -38,6 +38,10 @@ function fetchBaseData() {
         document.body.dataset.broadcast = json.broadcast;
       }
 
+      // Assigning Creator Onboarding Completed
+      document.body.dataset.creatorOnboardingCompleted =
+        json.creator_onboarding_completed;
+
       // Assigning User
       if (checkUserLoggedIn()) {
         document.body.dataset.user = json.user;
