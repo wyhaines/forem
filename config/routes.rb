@@ -301,7 +301,10 @@ Rails.application.routes.draw do
       get :podcasts
     end
 
-    resource :creator_onboarding, only: :show
+    constraints(->(_request) { Flipper.enabled?(:creator_onboarding) }) do
+      resource :creator_onboarding, only: :show
+    end
+
     resource :onboarding, only: :show
     resources :profiles, only: %i[update]
     resources :profile_field_groups, only: %i[index], defaults: { format: :json }
