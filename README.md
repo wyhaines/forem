@@ -12,7 +12,7 @@
     <img src="https://img.shields.io/badge/Rails-v6.0.3-brightgreen.svg" alt="rails version">
   </a>
   <a href="https://travis-ci.com/forem/forem">
-    <img src="https://travis-ci.com/forem/forem.svg?branch=master" alt="Travis Status for forem/forem">
+    <img src="https://travis-ci.com/forem/forem.svg?branch=main" alt="Travis Status for forem/forem">
   </a>
   <a href="https://codeclimate.com/github/forem/forem/maintainability">
     <img src="https://api.codeclimate.com/v1/badges/ce45bf63293073364bcb/maintainability" alt="Code Climate maintainability">
@@ -67,7 +67,7 @@ within our community. ❤️
 
 - [What is Forem?](#what-is-forem)
 - [Table of Contents](#table-of-contents)
-- [Community](#community) 
+- [Community](#community)
 - [Contributing](#contributing)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
@@ -161,8 +161,9 @@ A more complete overview of our stack is available in
 - [@cmgorton](https://dev.to/coffeecraftcode)
 - [@andygeorge](https://dev.to/andygeorge)
 - [@phannon716](https://dev.to/phannon716)
-- [@katiedavis](https://dev.to/katiedavis)
 - [@s_aitchison](https://dev.to/s_aitchison)
+- [@jgaskins](https://dev.to/jgaskins)
+- [@djuber](https://dev.to/djuber)
 
 ## Vulnerability disclosure
 

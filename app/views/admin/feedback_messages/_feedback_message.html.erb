@@ -43,7 +43,7 @@
               <a href="<%= feedback_message.offender.path %>">@<%= feedback_message.offender.username %></a>
             </h5>
           <% else %>
-          <h5 class="fw-bold">
+            <h5 class="fw-bold">
               Reported URL (new tab):
             </h5>
             <h5>
@@ -74,12 +74,12 @@
           </p>
           <% else %>
             <h5 class="fw-bold">
-            Message from Offender:
-          </h5>
-          <div class="reported__message">
-                 <%= raw(feedback_message.message) %>
-          </div>
-            <% end %>
+              Message from Offender:
+            </h5>
+            <div class="reported__message">
+              <%= raw(feedback_message.message) %>
+            </div>
+          <% end %>
         </div>
       </div>
       <hr>
@@ -90,7 +90,7 @@
             <% if feedback_message_emails.any? %>
               <% feedback_message_emails.each do |email| %>
                 <div class="email__container">
-                  <p class="to__subject">Type: <%= email.utm_campaign.capitalize %></p>
+                  <p class="to__subject">Type: <%= email.utm_campaign&.capitalize %></p>
                   <p class="to__subject">To: <%= email.to %></p>
                   <p class="to__subject">Subject: <%= email.subject %></p>
                   <%= email.body_html_content.html_safe %>
@@ -119,6 +119,8 @@
           </ul>
           <div class="tab-content my-3">
             <div role="tabcard" class="tab-pane fade active show" data-id="<%= feedback_message.id %>" data-userType="reporter" id="reporter-<%= feedback_message.id %>">
+              <div class="crayons-notice crayons-notice--info" aria-live="polite">Please note that all users who report abuse receive an automatic confirmation email. You can send an additional, follow-up email to this user by using the form below.</div>
+              <br>
               <h5 class="fw-bold">Send To:</h5>
               <%= email_field_tag :reporter_email_to, feedback_message.reporter&.email, class: "form-control my-1", id: "reporter__emailto__#{feedback_message.id}", required: true %>
               <h5 class="fw-bold">Subject:</h5>

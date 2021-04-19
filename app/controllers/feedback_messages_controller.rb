@@ -1,6 +1,8 @@
 class FeedbackMessagesController < ApplicationController
   # No authorization required for entirely public controller
   skip_before_action :verify_authenticity_token
+  FLASH_MESSAGE = "Make sure the forms are filled. 🤖 Other possible errors: "\
+    "%<errors>s".freeze
 
   def create
     flash.clear
@@ -20,13 +22,20 @@ class FeedbackMessagesController < ApplicationController
       )
       rate_limiter.track_limit_by_action(:feedback_message_creation)
 
+      if user_signed_in?
+        Rails.cache.fetch("user-#{current_user.id}-feedback-response-sent-at", expires_in: 24.hours) do
+          NotifyMailer.with(email_to: current_user.email).feedback_response_email.deliver_later
+          Time.current
+        end
+      end
+
       respond_to do |format|
         format.html { redirect_to feedback_messages_path }
         format.json { render json: { success: true, message: "Your report is submitted" } }
       end
     else
       @previous_message = feedback_message_params[:message]
-      flash[:notice] = "Make sure the forms are filled 🤖"
+      flash[:notice] = format(FLASH_MESSAGE, errors: @feedback_message.errors_as_sentence.presence || "N/A")
 
       respond_to do |format|
         format.html { render "pages/report_abuse" }
@@ -44,7 +53,7 @@ class FeedbackMessagesController < ApplicationController
   private
 
   def recaptcha_verified?
-    recaptcha_params = { secret_key: SiteConfig.recaptcha_secret_key }
+    recaptcha_params = { secret_key: Settings::Authentication.recaptcha_secret_key }
     params["g-recaptcha-response"] && verify_recaptcha(recaptcha_params)
   end
 

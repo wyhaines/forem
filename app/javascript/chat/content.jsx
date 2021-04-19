@@ -1,11 +1,11 @@
 import { h, Component } from 'preact';
 import PropTypes from 'prop-types';
-import Article from './article';
-import ChannelRequest from './channelRequest';
-import RequestManager from './RequestManager/RequestManager';
-import ChatChannelSettings from './ChatChannelSettings/ChatChannelSettings';
-import Draw from './draw';
-import ReportAbuse from './ReportAbuse';
+import { Article } from './article';
+import { ChannelRequest } from './channelRequest';
+import { RequestManager } from './RequestManager/RequestManager';
+import { ChatChannelSettings } from './ChatChannelSettings/ChatChannelSettings';
+import { Draw } from './draw';
+import { ReportAbuse } from './ReportAbuse';
 
 const smartSvgIcon = (content, d) => (
   <svg
@@ -14,13 +14,14 @@ const smartSvgIcon = (content, d) => (
     viewBox="0 0 24 24"
     width="24"
     height="24"
+    style={{ marginLeft: '-12px', marginTop: '-4px' }}
   >
     <path data-content={content} fill="none" d="M0 0h24v24H0z" />
     <path data-content={content} d={d} />
   </svg>
 );
 
-export default class Content extends Component {
+export class Content extends Component {
   static propTypes = {
     resource: PropTypes.shape({
       data: PropTypes.any,
@@ -74,7 +75,7 @@ export default class Content extends Component {
           type="button"
           className="activechatchannel__activecontentexitbutton activechatchannel__activecontentexitbutton--fullscreen crayons-btn crayons-btn--secondary"
           data-content="fullscreen"
-          style={{ left: '39px' }}
+          style={{ left: '-80px', marginLeft: '0px' }}
           title="fullscreen"
         >
           {' '}

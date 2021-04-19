@@ -2,7 +2,7 @@
 # https://docs.honeybadger.io/lib/ruby/getting-started/ignoring-errors.html#ignore-programmatically
 
 MESSAGE_FINGERPRINTS = {
-  "SUSPENDED" => "banned",
+  "SuspendedError" => "banned",
   "Rack::Timeout::RequestTimeoutException" => "rack_timeout",
   "Rack::Timeout::RequestTimeoutError" => "rack_timeout",
   "PG::QueryCanceled" => "pg_query_canceled"
@@ -11,6 +11,13 @@ MESSAGE_FINGERPRINTS = {
 COMPONENT_FINGERPRINTS = {
   "internal" => "internal"
 }.freeze
+
+HONEYBADGER_EXCEPTIONS_TO_IGNORE = [
+  ActiveRecord::QueryCanceled,
+  ActiveRecord::RecordNotFound,
+  Pundit::NotAuthorizedError,
+  RateLimitChecker::LimitReached,
+].freeze
 
 Rails.application.reloader.to_prepare do
   # https://docs.honeybadger.io/lib/ruby/gem-reference/configuration.html
@@ -25,8 +32,8 @@ Rails.application.reloader.to_prepare do
     # Logging allows us to fill in gaps if we need to when errors get discarded.
     config.send_data_at_exit = false
 
-    config.exceptions.ignore +=
-      config.request.filter_keys += %w[authorization]
+    config.exceptions.ignore += HONEYBADGER_EXCEPTIONS_TO_IGNORE
+    config.request.filter_keys += %w[authorization]
     config.sidekiq.attempt_threshold = 10
     config.breadcrumbs.enabled = true
 
