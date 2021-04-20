@@ -3,14 +3,25 @@ class ForemStatsDriver
     @driver = select_driver.new
   end
 
+  # All drivers should implement the following methods with
+  # the following call signatures
+  #
+  # count(metric_name, metric_value, options)
+  # increment(metric_name, options)
+  # time(metric_name, options, &blk)
+  # gauge(metric_name, metric_value, options)
+
   delegate(:count, :increment, :time, :gauge, to: :@driver)
 
   private
 
-  def select_driver
-    # Currently, this only supports the default Datadog driver.
-    # Logic will be added here for selecting the correct driver based on
-    # the existence of configuration files for the desired stats recipient.
-    ForemStatsDrivers::DatadogDriver
+  def select_driver(driver = nil)
+    if ENV["NEW_RELIC_LICENSE_KEY"] ||
+      Rails.application.config.respond_to?(:newrelic) ||
+      driver == :newrelic
+      ForemStatsDrivers::NewRelicDriver
+    else
+      ForemStatsDrivers::DatadogDriver
+    end
   end
 end
