@@ -27,6 +27,19 @@ RSpec.describe MarkdownProcessor::Parser, type: :service do
     expect(generate_and_parse_markdown(code_block)).not_to include("----")
   end
 
+  it "escapes some triple backticks within a codeblock when using tildes" do
+    code_block = "​~~~\nhello\n// ```\nwhatever\n// ```\n~~~"
+    number_of_triple_backticks = generate_and_parse_markdown(code_block).scan("```").count
+    expect(number_of_triple_backticks).to eq(2)
+  end
+
+  # TODO: @zhao-andy this should fail if this issue is solved: https://github.com/forem/forem/issues/13823
+  it "escapes triple backticks within a codeblock when using tildes" do
+    code_block = "~~~\nhello\n```\nwhatever\n```\n~~~"
+    number_of_triple_backticks = generate_and_parse_markdown(code_block).scan("```").count
+    expect(number_of_triple_backticks).to eq(0)
+  end
+
   it "does not remove the non-'raw tag related' four dashes" do
     code_block = "```\n----\n```"
     expect(generate_and_parse_markdown(code_block)).to include("----")
@@ -123,6 +136,11 @@ RSpec.describe MarkdownProcessor::Parser, type: :service do
     code_block_object = described_class.new(content)
     test = code_block_object.convert_code_tags_to_triple_backticks(content)
     expect(test).to be(content)
+  end
+
+  it "permits abbr tags" do
+    result = generate_and_parse_markdown("<abbr title=\"ol korrect\">OK</abbr>")
+    expect(result).to include("<abbr title=\"ol korrect\">OK</abbr>")
   end
 
   context "when rendering links markdown" do
@@ -321,7 +339,7 @@ RSpec.describe MarkdownProcessor::Parser, type: :service do
       expect(generate_and_parse_markdown(markdown_with_img)).to include("<a")
     end
 
-    it "wraps the image with Cloudinary" do
+    it "wraps the image with Cloudinary", cloudinary: true do
       expect(generate_and_parse_markdown(markdown_with_img))
         .to include("https://res.cloudinary.com")
     end
@@ -361,11 +379,6 @@ RSpec.describe MarkdownProcessor::Parser, type: :service do
       result = generate_and_parse_markdown("- [A](#a)\n  - [B](#b)\n- [C](#c)")
       expect(result).not_to include("<br>")
     end
-
-    it "permits abbr and aside tags" do
-      result = generate_and_parse_markdown("<aside><abbr title=\"ol korrect\">OK</abbr><aside>")
-      expect(result).to include("<aside><abbr title=\"ol korrect\">OK</abbr><aside>")
-    end
   end
 
   context "when word as snake case" do
@@ -396,6 +409,28 @@ RSpec.describe MarkdownProcessor::Parser, type: :service do
     it "adds correct syntax highlighting to codeblocks when the hint is lowercase" do
       code_block = "```ada\nwith Ada.Directories;\n````"
       expect(generate_and_parse_markdown(code_block)).to include("highlight ada")
+    end
+  end
+
+  context "when using a valid attribute" do
+    let(:example_text) { "{% liquid example %}" }
+
+    it "prevents the attribute from having Liquid tags inside" do
+      text = '<img src="x" alt="{% 404/404#">%}'
+      expect(generate_and_parse_markdown(text)).to exclude("{%")
+    end
+
+    it "does not scrub attributes in inline code" do
+      inline_code = "`#{example_text}`"
+      expect(generate_and_parse_markdown(inline_code)).to include(example_text)
+      double_fenced_code = "``#{example_text}``"
+      expect(generate_and_parse_markdown(double_fenced_code)).to include(example_text)
+    end
+
+    it "does not scrub attributes in codeblocks" do
+      codeblock = "```\n#{example_text}\n```"
+      expect(generate_and_parse_markdown(codeblock)).to include("{%")
+      expect(generate_and_parse_markdown(codeblock)).to include("%}")
     end
   end
 end

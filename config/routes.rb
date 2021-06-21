@@ -21,6 +21,9 @@ Rails.application.routes.draw do
     delete "/sign_out", to: "devise/sessions#destroy"
   end
 
+  get "/r/mobile", to: "deep_links#mobile"
+  get "/.well-known/apple-app-site-association", to: "deep_links#aasa"
+
   # [@forem/delightful] - all routes are nested under this optional scope to
   # begin supporting i18n.
   scope "(/locale/:locale)", defaults: { locale: nil } do
@@ -37,65 +40,13 @@ Rails.application.routes.draw do
       mount FieldTest::Engine, at: "abtests"
     end
 
-    namespace :admin do
-      get "/", to: "overview#index"
-
-      # NOTE: [@ridhwana] These are the admin routes that have stayed the same even with the
-      # restructure. They'll move into routes/admin.rb once we remove the old code.
-      authenticate :user, ->(user) { user.tech_admin? } do
-        mount Blazer::Engine, at: "blazer"
-
-        flipper_ui = Flipper::UI.app(Flipper,
-                                     { rack_protection: { except: %i[authenticity_token form_token json_csrf
-                                                                     remote_token http_origin session_hijacking] } })
-        mount flipper_ui, at: "feature_flags"
-      end
-      resources :invitations, only: %i[index new create destroy]
-      resources :organization_memberships, only: %i[update destroy create]
-      resources :permissions, only: %i[index]
-      resources :reactions, only: [:update]
-      namespace :settings do
-        resources :authentications, only: [:create]
-        resources :campaigns, only: [:create]
-      end
-      namespace :users do
-        resources :gdpr_delete_requests, only: %i[index destroy]
-      end
-      resources :users, only: %i[index show edit update destroy] do
-        resources :email_messages, only: :show
-        member do
-          post "banish"
-          post "export_data"
-          post "full_delete"
-          patch "user_status"
-          post "merge"
-          delete "remove_identity"
-          post "send_email"
-          post "verify_email_ownership"
-          patch "unlock_access"
-        end
-      end
-
-      # These redirects serve as a safeguard to prevent 404s for any Admins
-      # who have the old badge_achievement URLs bookmarked.
-      get "/badges/badge_achievements", to: redirect("/admin/badge_achievements")
-      get "/badges/badge_achievements/award_badges", to: redirect("/admin/badge_achievements/award_badges")
-
-      # NOTE: [@ridhwana] All these conditional statements are temporary conditions.
-      # We check that the database table exists to avoid the DB setup failing
-      # because the code relies on the presence of a table.
-      if Database.table_available?("flipper_features")
-        # NOTE: [@ridhwana] admin_routes will require the rails app to be reloaded when the feature flag is toggled
-        # You can find more details on why we had to implement it this way in this PR
-        # https://github.com/forem/forem/pull/13114
-        admin_routes = FeatureFlag.enabled?(:admin_restructure) ? :admin : :current_admin
-        draw admin_routes
-      end
-    end
+    draw :admin
 
     namespace :stories, defaults: { format: "json" } do
       resource :feed, only: [:show] do
-        get ":timeframe", to: "feeds#show"
+        resource :pinned_article, only: %w[show update destroy]
+
+        get ":timeframe", to: "feeds#show", as: :timeframe
       end
     end
 
@@ -140,7 +91,6 @@ Rails.application.routes.draw do
         resources :health_checks, only: [] do
           collection do
             get :app
-            get :search
             get :database
             get :cache
           end
@@ -151,10 +101,6 @@ Rails.application.routes.draw do
           resources :users, only: [:index], to: "organizations#users"
           resources :listings, only: [:index], to: "organizations#listings"
           resources :articles, only: [:index], to: "organizations#articles"
-        end
-
-        namespace :admin do
-          resource :config, only: %i[show update], defaults: { format: :json }
         end
       end
     end
@@ -186,10 +132,8 @@ Rails.application.routes.draw do
     end
     resources :comment_mutes, only: %i[update]
     resources :users, only: %i[index], defaults: { format: :json } do # internal API
-      constraints(-> { FeatureFlag.enabled?(:mobile_notifications) }) do
-        collection do
-          resources :devices, only: %i[create destroy]
-        end
+      collection do
+        resources :devices, only: %i[create destroy]
       end
     end
     resources :users, only: %i[update]
@@ -234,7 +178,6 @@ Rails.application.routes.draw do
     resources :poll_votes, only: %i[show create]
     resources :poll_skips, only: [:create]
     resources :profile_pins, only: %i[create update]
-    resources :partnerships, only: %i[index create show], param: :option
     resources :display_ad_events, only: [:create]
     resources :badges, only: [:index]
     resources :user_blocks, param: :blocked_id, only: %i[show create destroy]
@@ -260,11 +203,12 @@ Rails.application.routes.draw do
 
     resources :liquid_tags, only: %i[index], defaults: { format: :json }
 
+    resources :discussion_locks, only: %i[create destroy]
+
     get "/verify_email_ownership", to: "email_authorizations#verify", as: :verify_email_authorizations
     get "/search/tags", to: "search#tags"
     get "/search/chat_channels", to: "search#chat_channels"
     get "/search/listings", to: "search#listings"
-    get "/search/users", to: "search#users"
     get "/search/usernames", to: "search#usernames"
     get "/search/feed_content", to: "search#feed_content"
     get "/search/reactions", to: "search#reactions"
@@ -372,20 +316,12 @@ Rails.application.routes.draw do
     get "/page/post-a-job", to: "pages#post_a_job"
     get "/tag-moderation", to: "pages#tag_moderation"
 
-    # NOTE: can't remove the hardcoded URL here as SiteConfig is not available here, we should eventually
-    # setup dynamic redirects, see <https://github.com/thepracticaldev/dev.to/issues/7267>
-    get "/shop", to: redirect("https://shop.dev.to")
-
     get "/mod", to: "moderations#index", as: :mod
     get "/mod/:tag", to: "moderations#index"
 
     post "/fallback_activity_recorder", to: "ga_events#create"
 
     get "/page/:slug", to: "pages#show"
-
-    # TODO: [forem/teamsmash] removed the /p/information view and added a redirect for SEO purposes.
-    # We need to remove this route in 2 months (11 January 2021).
-    get "/p/information", to: redirect("/about")
 
     scope "p" do
       pages_actions = %w[welcome editor_guide publishing_from_rss_guide markdown_basics badges].freeze
@@ -450,15 +386,16 @@ Rails.application.routes.draw do
     get "/feed/:username", to: "articles#feed", as: "user_feed", defaults: { format: "rss" }
     get "/rss", to: "articles#feed", defaults: { format: "rss" }
 
-    get "/tag/:tag", to: "stories#index"
-    get "/t/:tag", to: "stories#index", as: :tag
-    get "/t/:tag/edit", to: "tags#edit"
+    get "/tag/:tag", to: "stories/tagged_articles#index"
+    get "/t/:tag", to: "stories/tagged_articles#index", as: :tag
+    get "/t/:tag/top/:timeframe", to: "stories/tagged_articles#index"
+    get "/t/:tag/page/:page", to: "stories/tagged_articles#index"
+    get "/t/:tag/:timeframe", to: "stories/tagged_articles#index",
+                              constraints: { timeframe: /latest/ }
+
+    get "/t/:tag/edit", to: "tags#edit", as: :edit_tag
     get "/t/:tag/admin", to: "tags#admin"
     patch "/tag/:id", to: "tags#update"
-    get "/t/:tag/top/:timeframe", to: "stories#index"
-    get "/t/:tag/page/:page", to: "stories#index"
-    get "/t/:tag/:timeframe", to: "stories#index",
-                              constraints: { timeframe: /latest/ }
 
     get "/badge/:slug", to: "badges#show", as: :badge
 
@@ -486,9 +423,11 @@ Rails.application.routes.draw do
                                   constraints: { view: /moderate/ }
     get "/:username/:slug/mod", to: "moderations#article"
     get "/:username/:slug/actions_panel", to: "moderations#actions_panel"
-    get "/:username/:slug/manage", to: "articles#manage"
+    get "/:username/:slug/manage", to: "articles#manage", as: :article_manage
     get "/:username/:slug/edit", to: "articles#edit"
     get "/:username/:slug/delete_confirm", to: "articles#delete_confirm"
+    get "/:username/:slug/discussion_lock_confirm", to: "articles#discussion_lock_confirm"
+    get "/:username/:slug/discussion_unlock_confirm", to: "articles#discussion_unlock_confirm"
     get "/:username/:slug/stats", to: "articles#stats"
     get "/:username/:view", to: "stories#index",
                             constraints: { view: /comments|moderate|admin/ }

@@ -226,16 +226,14 @@ export const MentionAutocompleteTextArea = forwardRef(
 
     const handleTextInputChange = ({ target: { value } }) => {
       setTextContent(value);
-      const isComboboxVisible = !comboboxRef.current.classList.contains(
-        'hidden',
-      );
+      const isComboboxVisible =
+        !comboboxRef.current.classList.contains('hidden');
       const currentActiveInput = isComboboxVisible
         ? comboboxRef.current
         : plainTextAreaRef.current;
 
-      const { isUserMention, indexOfMentionStart } = getMentionWordData(
-        currentActiveInput,
-      );
+      const { isUserMention, indexOfMentionStart } =
+        getMentionWordData(currentActiveInput);
 
       const { selectionStart } = currentActiveInput;
 
@@ -343,11 +341,13 @@ export const MentionAutocompleteTextArea = forwardRef(
         <Combobox
           ref={containerRef}
           id="combobox-container"
+          data-testid="autocomplete-wrapper"
           onSelect={handleSelect}
           className={`crayons-autocomplete${autoResize ? ' h-100' : ''}`}
         >
           <ComboboxInput
             {...autocompleteInputProps}
+            data-gramm_editor="false"
             aria-label="Mention user"
             ref={comboboxRef}
             value={textContent}
@@ -366,6 +366,7 @@ export const MentionAutocompleteTextArea = forwardRef(
 
           <textarea
             {...autocompleteInputProps}
+            data-gramm_editor="false"
             id={inputId}
             data-mention-autocomplete-active="true"
             ref={mergeInputRefs([plainTextAreaRef, forwardedRef])}
@@ -390,6 +391,7 @@ export const MentionAutocompleteTextArea = forwardRef(
                 <ComboboxList>
                   {users.map((user) => (
                     <ComboboxOption
+                      key={user.username}
                       value={user.username}
                       className="crayons-autocomplete__option flex items-center"
                     >
